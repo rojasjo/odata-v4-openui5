@@ -1,6 +1,7 @@
 {
     "_version": "1.58.0",
     "sap.app": {
+        "ach" : "CA-UI5-COR",
         "id": "odata.openui5",
         "type": "application",
         "i18n": {
@@ -14,7 +15,16 @@
         "description": "{{appDescription}}",
         "applicationVersion": {
             "version": "1.0.0"
-        }
+        },
+        "dataSources": {
+			"default": {
+				"uri": "https://services.odata.org/TripPinRESTierService/(S(id))/",
+				"type": "OData",
+				"settings": {
+					"odataVersion": "4.0"
+				}
+			}
+		}
     },
     "sap.ui": {
         "technology": "UI5",
@@ -38,6 +48,10 @@
                 "sap.ui.core": {}
             }
         },
+        "contentDensities": {
+			"compact": true,
+			"cozy": true
+		},
         "resources": {
             "css": [
                 {
@@ -55,7 +69,16 @@
                     ],
                     "fallbackLocale": ""
                 }
-            }
+            },
+            "": {
+				"dataSource": "default",
+				"preload": true,
+				"settings": {
+					"autoExpandSelect": true,
+					"earlyRequests": true,
+					"operationMode": "Server"
+				}
+			}
         },
         "routing": {
             "config": {
