@@ -53,14 +53,20 @@ sap.ui.define([
 		},
 
 		onDelete: function () {
-			var oSelected = this.byId("peopleList").getSelectedItem();
+			var oContext,
+				oPeopleList = this.byId("peopleList"),
+				oSelected = oPeopleList.getSelectedItem(),
+				sUserName;
 
 			if (oSelected) {
-				var oContext = oSelected.getBindingContext();
-				var sUserName = oContext.getProperty("UserName");
+				oContext = oSelected.getBindingContext();
+				sUserName = oContext.getProperty("UserName");
 				oContext.delete().then(function () {
 					MessageToast.show(this._getText("deletionSuccessMessage", sUserName));
 				}.bind(this), function (oError) {
+					if (oContext === oPeopleList.getSelectedItem().getBindingContext()) {
+						this._setDetailArea(oContext);
+					}
 					this._setUIChanges();
 					if (oError.canceled) {
 						MessageToast.show(this._getText("deletionRestoredMessage", sUserName));
@@ -68,7 +74,7 @@ sap.ui.define([
 					}
 					MessageBox.error(oError.message + ": " + sUserName);
 				}.bind(this));
-
+				this._setDetailArea();
 				this._setUIChanges(true);
 			}
 		},
@@ -128,6 +134,19 @@ sap.ui.define([
 			this._setUIChanges();
 		},
 
+		onResetDataSource: function () {
+			var oModel = this.getView().getModel(),
+				oOperation = oModel.bindContext("/ResetDataSource(...)");
+
+			oOperation.execute().then(function () {
+				oModel.refresh();
+				MessageToast.show(this._getText("sourceResetSuccessMessage"));
+			}.bind(this), function (oError) {
+				MessageBox.error(oError.message);
+			}
+			);
+		},
+
 		onSave: function () {
 			var fnSuccess = function () {
 				this._setBusy(false);
@@ -152,6 +171,11 @@ sap.ui.define([
 			var oFilter = new Filter("LastName", FilterOperator.Contains, sValue);
 
 			oView.byId("peopleList").getBinding("items").filter(oFilter, FilterType.Application);
+		},
+
+
+		onSelectionChange: function (oEvent) {
+			this._setDetailArea(oEvent.getParameter("listItem").getBindingContext());
 		},
 
 		onSort: function () {
@@ -186,9 +210,28 @@ sap.ui.define([
 			var oModel = this.getView().getModel("appView");
 			oModel.setProperty("/hasUIChanges", bHasUIChanges);
 		},
+
 		_setBusy: function (bIsBusy) {
 			var oModel = this.getView().getModel("appView");
 			oModel.setProperty("/busy", bIsBusy);
+		},
+
+		/**
+		 * Toggles the visibility of the detail area
+		*
+		* @param {object} [oUserContext] - the current user context
+		*/
+		_setDetailArea: function (oUserContext) {
+			var oDetailArea = this.byId("detailArea"),
+				oLayout = this.byId("defaultLayout"),
+				oSearchField = this.byId("searchField");
+
+			oDetailArea.setBindingContext(oUserContext || null);
+			// resize view
+			oDetailArea.setVisible(!!oUserContext);
+			oLayout.setSize(oUserContext ? "60%" : "100%");
+			oLayout.setResizable(!!oUserContext);
+			oSearchField.setWidth(oUserContext ? "40%" : "20%");
 		}
 	});
 });
